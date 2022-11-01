@@ -1,5 +1,4 @@
-from math import prod
-import requests
+import requests, re
 from bs4 import BeautifulSoup
 
 r = requests.get("http://books.toscrape.com/catalogue/eragon-the-inheritance-cycle-1_153/index.html")
@@ -56,7 +55,10 @@ if r.status_code == 200:
             if field_of_table == "Price (incl. tax)":
                 book["price_excluding_tax"] = value_of_table
             if field_of_table == "Availability":
-                book["number_available"] = value_of_table
+                if "In stock" in value_of_table:
+                    book["number_available"] = re.search(r'\d+', value_of_table).group()
+                else:
+                    book["number_available"] = 0
 
     print(book)
 
