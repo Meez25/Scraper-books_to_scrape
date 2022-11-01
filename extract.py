@@ -2,6 +2,7 @@ from typing import IO
 import requests, re
 from bs4 import BeautifulSoup
 import csv
+import time
 
 def main():
 
@@ -95,13 +96,16 @@ def convert_numeric_words_to_number(star):
     return help_dict[star]
 
 def write_dict_to_csv(book):
+
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+
     csv_header = ["product_page_url", "universal_product_code", "title", "price_including_tax", 
     "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
 
-    csv_file = "output/books.csv"
+    csv_file = "output/books_extraction_" + timestamp + ".csv"
     try:
         with open(csv_file, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=csv_header, delimiter=";")
+            writer = csv.DictWriter(csvfile, fieldnames=csv_header, delimiter=",")
             writer.writeheader()
             writer.writerow(book)
     except IOError:
