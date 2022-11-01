@@ -5,14 +5,48 @@ import csv
 import time
 
 def main():
-
-    r = requests.get("http://books.toscrape.com/catalogue/eragon-the-inheritance-cycle-1_153/index.html")
-
-    # Fix the encoding 
-    r.encoding = r.apparent_encoding
+    r = requests.get("http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html")
+    
 
     # Check that we receive the 200 status code
     if r.status_code == 200:
+        # Fix the encoding 
+        r.encoding = r.apparent_encoding
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        # Getting all the link to books of the page
+        image_containers = soup.find_all("div", attrs={'class':'image_container'})
+        
+        for image in image_containers:
+            list_of_a = image.find_all("a", href=True)
+            for url in list_of_a:
+                print(url["href"])
+        
+        # Check if there are other pages
+        if soup.find(class_="next"):
+            print("found a next page!")
+        
+        
+    
+    
+    get_csv_from_book_url("http://books.toscrape.com/catalogue/eragon-the-inheritance-cycle-1_153/index.html")
+
+
+
+
+def get_csv_from_book_url(url):
+
+    r = requests.get(url)
+
+    
+
+    # Check that we receive the 200 status code
+    if r.status_code == 200:
+
+        # Fix the encoding 
+        r.encoding = r.apparent_encoding
+
         soup = BeautifulSoup(r.text, 'html.parser')
 
         # Creating a book to store all the information
@@ -66,7 +100,7 @@ def main():
                         number_available = 0
 
         # Fill in the dict
-        book["product_page_url"] = r.url
+        book["product_page_url"] = product_page_url
         book["universal_product_code"] = universal_product_code
         book["title"] = title
         book["price_including_tax"] = price_including_tax
@@ -77,7 +111,6 @@ def main():
         book["review_rating"] = review_rating
         book["image_url"] = image_url
 
-        print(book)
         write_dict_to_csv(book)
 
     else:
