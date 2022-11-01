@@ -1,9 +1,12 @@
+from cgitb import handler
 from typing import IO
+from unicodedata import name
 import requests, re
 from bs4 import BeautifulSoup
 import csv
 import time
 from os.path import exists
+import os
 
 def main():
     timestamp = time.strftime("%Y%m%d-%H%M%S")
@@ -157,10 +160,26 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
         book["image_url"] = image_url
 
         write_dict_to_csv(book, timestamp, name_of_category)
+        download_image_from_url(image_url, name_of_category, universal_product_code, title)
         print(f'{book["title"]} from {book["category"]} category')
 
     else:
         print(f"{r.status_code} on URL {r.url}")
+
+# Download image from Url and save it in /img
+def download_image_from_url(image_url, name_of_category, universal_product_code, title):
+
+    name_of_category = name_of_category.replace(" ", "_")
+    absolute_url = "http://books.toscrape.com/" + re.search(r'[a-zA-Z].*', image_url).group()
+    print(absolute_url)
+    img_data = requests.get(absolute_url).content
+    path = "img/" + name_of_category + "/"
+    isExist = exists(path)
+    if not isExist:
+        os.makedirs(path)
+    with open(path + universal_product_code + ".jpg", "wb") as handler:
+        #name_of_category + "/" + title[:10].strip() + "_" 
+        handler.write(img_data)
 
 # Function to convert numeric words to number
 def convert_numeric_words_to_number(star):
@@ -178,6 +197,11 @@ def write_dict_to_csv(book, timestamp, name_of_category):
 
     csv_header = ["product_page_url", "universal_product_code", "title", "price_including_tax", 
     "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
+
+    path = "output/"
+    isExist = exists(path)
+    if not isExist:
+        os.makedirs(path)
 
     csv_file = "output/Books_category_" + name_of_category + "_" + timestamp + ".csv"
 
