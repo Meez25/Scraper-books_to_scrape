@@ -25,7 +25,8 @@ if r.status_code == 200:
     book["title"] = title
 
     # Getting the review rating
-    review_rating = 
+    review_rating = product_main_info.find("p", attrs={'class':'star-rating'})
+    book["review_rating"] = review_rating['class'][1]
     
     
     # Getting the data from the table
