@@ -8,7 +8,7 @@ from os.path import exists
 def main():
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
-    r = requests.get("http://books.toscrape.com/catalogue/category/books_1/index.html")
+    r = requests.get("http://books.toscrape.com/")
 
     # Check that we receive the 200 status code
     if r.status_code == 200:
@@ -20,14 +20,26 @@ def main():
         # Get all the links to all categories
         nav_list = soup.find_all(class_ = "nav nav-list")
         for html_category in nav_list:
-            list_category = html_category.find_all("a", href=True)
-            for category in list_category:
-                category = "http://books.toscrape.com/catalogue/category" + category["href"][2:]
-                
-                get_csv_from_category(category, timestamp)
+            list_category_html = html_category.find_all("a", href=True)
+
+            # Ignore the Book category
+            list_category_html.pop(0)
+            
+
+            # Find the list of url and parse each of those
+            for category in list_category_html:
+                name_of_category = category.text.strip()
+
+                # Replace the space by a "_" in the 
+                name_of_category = name_of_category.replace(" ", "_")
+                url = r.url + category["href"]
+                get_csv_from_category(url, timestamp, name_of_category)
+
+    else:
+        print(f"{r.status_code} on URL {r.url}")
 
 
-def get_csv_from_category(url, timestamp):
+def get_csv_from_category(url, timestamp, name_of_category):
 
     # Get the time for the filename
     
@@ -50,23 +62,24 @@ def get_csv_from_category(url, timestamp):
             for url in list_of_a:
 
                 # Reformate the URL to an absolute URL
-                relative_path = re.search(r'[a-zA-Z].*', url["href"]).group()
+                relative_path = re.search(r'[0-9a-zA-Z].*', url["href"]).group()
                 absolute_url = "http://books.toscrape.com/catalogue/" + relative_path
                 
-                get_csv_from_book_url(absolute_url, timestamp)
+                get_csv_from_book_url(absolute_url, timestamp, name_of_category)
                 
         
         # Check if there are other pages
         if soup.find(class_="next"):
-            print("found a next page!")
             next_url = soup.find(class_="next").find("a", href=True)["href"]
             first_part_of_url = re.search(r'.*/', r.url).group()
             next_url = first_part_of_url + next_url
-            print(next_url)
+            
+            get_csv_from_category(next_url, timestamp, name_of_category)
 
-            get_csv_from_category(next_url, timestamp)
+    else:
+        print(f"{r.status_code} on URL {r.url}")
 
-def get_csv_from_book_url(url, timestamp):
+def get_csv_from_book_url(url, timestamp, name_of_category):
 
     r = requests.get(url)
 
@@ -100,7 +113,7 @@ def get_csv_from_book_url(url, timestamp):
         
         # Getting the product description
         if soup.find(class_="sub-header").find_next_sibling("p"):
-            product_description = soup.find(class_="sub-header").find_next_sibling("p").text
+            product_description = soup.find(class_="sub-header").find_next_sibling("p").text.strip()
         else:
             product_description = ""
         
@@ -143,11 +156,11 @@ def get_csv_from_book_url(url, timestamp):
         book["review_rating"] = review_rating
         book["image_url"] = image_url
 
-        write_dict_to_csv(book, timestamp)
-        print(book)
+        write_dict_to_csv(book, timestamp, name_of_category)
+        print(f'{book["title"]} from {book["category"]} category')
 
     else:
-        print("Request had an issue")
+        print(f"{r.status_code} on URL {r.url}")
 
 # Function to convert numeric words to number
 def convert_numeric_words_to_number(star):
@@ -161,12 +174,12 @@ def convert_numeric_words_to_number(star):
     }
     return help_dict[star]
 
-def write_dict_to_csv(book, timestamp):
+def write_dict_to_csv(book, timestamp, name_of_category):
 
     csv_header = ["product_page_url", "universal_product_code", "title", "price_including_tax", 
     "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
 
-    csv_file = "output/books_extraction_" + timestamp + ".csv"
+    csv_file = "output/Books_category_" + name_of_category + "_" + timestamp + ".csv"
 
     # Write to file 
     try:
