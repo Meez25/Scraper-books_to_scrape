@@ -7,7 +7,24 @@ from os.path import exists
 
 def main():
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    get_csv_from_category("http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html", timestamp)
+
+    r = requests.get("http://books.toscrape.com/catalogue/category/books_1/index.html")
+
+    # Check that we receive the 200 status code
+    if r.status_code == 200:
+        # Fix the encoding 
+        r.encoding = r.apparent_encoding
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        # Get all the links to all categories
+        nav_list = soup.find_all(class_ = "nav nav-list")
+        for html_category in nav_list:
+            list_category = html_category.find_all("a", href=True)
+            for category in list_category:
+                category = "http://books.toscrape.com/catalogue/category" + category["href"][2:]
+                
+                get_csv_from_category(category, timestamp)
 
 
 def get_csv_from_category(url, timestamp):
@@ -48,15 +65,6 @@ def get_csv_from_category(url, timestamp):
             print(next_url)
 
             get_csv_from_category(next_url, timestamp)
-                
-        
-        
-    
-    
-    #get_csv_from_book_url("http://books.toscrape.com/catalogue/eragon-the-inheritance-cycle-1_153/index.html", timestamp)
-
-
-
 
 def get_csv_from_book_url(url, timestamp):
 
@@ -91,7 +99,10 @@ def get_csv_from_book_url(url, timestamp):
         image_url = soup.find(class_="carousel").find("img")["src"]
         
         # Getting the product description
-        product_description = soup.find(class_="sub-header").find_next_sibling("p").text
+        if soup.find(class_="sub-header").find_next_sibling("p"):
+            product_description = soup.find(class_="sub-header").find_next_sibling("p").text
+        else:
+            product_description = ""
         
         # Getting the category (should be the link before the name title) and removing the \n
         category = soup.find(class_="breadcrumb").find_all("li")[-2].text.replace("\n", "")
