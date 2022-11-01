@@ -36,6 +36,10 @@ if r.status_code == 200:
     product_description = soup.find(class_="sub-header").find_next_sibling("p").text
     book["product_description"] = product_description
 
+    # Getting the category (should be the link before the name title)
+    category = soup.find(class_="breadcrumb").find_all("li")[-2].text
+    book["category"] = category
+
     # Getting the data from the table
     table = soup.find("table", attrs={'class':'table table-striped'})
     if table:
