@@ -27,8 +27,15 @@ if r.status_code == 200:
     # Getting the review rating
     review_rating = product_main_info.find("p", attrs={'class':'star-rating'})
     book["review_rating"] = review_rating['class'][1]
+
+    # Getting the image URL
+    image_url = soup.find(class_="carousel").find("img")["src"]
+    book["image_url"] = image_url
     
-    
+    # Getting the product description
+    product_description = soup.find(class_="sub-header").find_next_sibling("p").text
+    book["product_description"] = product_description
+
     # Getting the data from the table
     table = soup.find("table", attrs={'class':'table table-striped'})
     if table:
