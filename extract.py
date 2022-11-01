@@ -6,11 +6,16 @@ import time
 from os.path import exists
 
 def main():
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    get_csv_from_category("http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html", timestamp)
+
+
+def get_csv_from_category(url, timestamp):
 
     # Get the time for the filename
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    
 
-    r = requests.get("http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html")
+    r = requests.get(url)
     
 
     # Check that we receive the 200 status code
@@ -28,8 +33,8 @@ def main():
             for url in list_of_a:
 
                 # Reformate the URL to an absolute URL
-                x = re.search(r'[a-zA-Z].*', url["href"]).group()
-                absolute_url = "http://books.toscrape.com/catalogue/" + x
+                relative_path = re.search(r'[a-zA-Z].*', url["href"]).group()
+                absolute_url = "http://books.toscrape.com/catalogue/" + relative_path
                 
                 get_csv_from_book_url(absolute_url, timestamp)
                 
@@ -37,6 +42,13 @@ def main():
         # Check if there are other pages
         if soup.find(class_="next"):
             print("found a next page!")
+            next_url = soup.find(class_="next").find("a", href=True)["href"]
+            first_part_of_url = re.search(r'.*/', r.url).group()
+            next_url = first_part_of_url + next_url
+            print(next_url)
+
+            get_csv_from_category(next_url, timestamp)
+                
         
         
     
@@ -140,8 +152,6 @@ def convert_numeric_words_to_number(star):
 
 def write_dict_to_csv(book, timestamp):
 
-    
-
     csv_header = ["product_page_url", "universal_product_code", "title", "price_including_tax", 
     "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
 
@@ -161,7 +171,7 @@ def write_dict_to_csv(book, timestamp):
         f_output.close()
     except IOError:
         print("I/O error")
-        
+
 
 if __name__ == "__main__":
 	main()
