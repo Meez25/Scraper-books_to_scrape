@@ -1,3 +1,4 @@
+from math import prod
 import requests
 from bs4 import BeautifulSoup
 
@@ -10,28 +11,40 @@ r.encoding = r.apparent_encoding
 if r.status_code == 200:
     soup = BeautifulSoup(r.text, 'html.parser')
 
+    # Creating a book to store all the information
     book = {}
     
-    # Get the data from the webpage using beautiful soup and requests
-    product_page_url = r.url
+    # Getting the data from the webpage using beautiful soup and requests
+    book["product_page_url"] = r.url
 
+    # Getting the product main div
+    product_main_info = soup.find("div", attrs={'class':'col-sm-6 product_main'})
+    
+    # Getting the title of the book
+    title = product_main_info.find("h1").text.strip()
+    book["title"] = title
+
+    # Getting the review rating
+    review_rating = 
+    
+    
+    # Getting the data from the table
     table = soup.find("table", attrs={'class':'table table-striped'})
     if table:
         rows = table.find_all("tr")
         for row in rows:
-            field = row.find("th").text.strip()
-            print(field)
-            value = row.find("td").text.strip()
-            print(value)
+            field_of_table = row.find("th").text.strip()
+            value_of_table = row.find("td").text.strip()
+            
 
-            if field == "UPC":
-                book["universal_ product_code"] = value
-            if field == "Price (excl. tax)":
-                book["price_including_tax"] = value
-            if field == "Price (incl. tax)":
-                book["price_excluding_tax"] = value
-            if field == "Availability":
-                book["number_available"] = value
+            if field_of_table == "UPC":
+                book["universal_ product_code"] = value_of_table
+            if field_of_table == "Price (excl. tax)":
+                book["price_including_tax"] = value_of_table
+            if field_of_table == "Price (incl. tax)":
+                book["price_excluding_tax"] = value_of_table
+            if field_of_table == "Availability":
+                book["number_available"] = value_of_table
 
     print(book)
 
