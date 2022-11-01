@@ -3,8 +3,13 @@ import requests, re
 from bs4 import BeautifulSoup
 import csv
 import time
+from os.path import exists
 
 def main():
+
+    # Get the time for the filename
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+
     r = requests.get("http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html")
     
 
@@ -21,7 +26,13 @@ def main():
         for image in image_containers:
             list_of_a = image.find_all("a", href=True)
             for url in list_of_a:
-                print(url["href"])
+
+                # Reformate the URL to an absolute URL
+                x = re.search(r'[a-zA-Z].*', url["href"]).group()
+                absolute_url = "http://books.toscrape.com/catalogue/" + x
+                
+                get_csv_from_book_url(absolute_url, timestamp)
+                
         
         # Check if there are other pages
         if soup.find(class_="next"):
@@ -30,16 +41,14 @@ def main():
         
     
     
-    get_csv_from_book_url("http://books.toscrape.com/catalogue/eragon-the-inheritance-cycle-1_153/index.html")
+    #get_csv_from_book_url("http://books.toscrape.com/catalogue/eragon-the-inheritance-cycle-1_153/index.html", timestamp)
 
 
 
 
-def get_csv_from_book_url(url):
+def get_csv_from_book_url(url, timestamp):
 
     r = requests.get(url)
-
-    
 
     # Check that we receive the 200 status code
     if r.status_code == 200:
@@ -111,7 +120,8 @@ def get_csv_from_book_url(url):
         book["review_rating"] = review_rating
         book["image_url"] = image_url
 
-        write_dict_to_csv(book)
+        write_dict_to_csv(book, timestamp)
+        print(book)
 
     else:
         print("Request had an issue")
@@ -128,22 +138,30 @@ def convert_numeric_words_to_number(star):
     }
     return help_dict[star]
 
-def write_dict_to_csv(book):
+def write_dict_to_csv(book, timestamp):
 
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    
 
     csv_header = ["product_page_url", "universal_product_code", "title", "price_including_tax", 
     "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
 
     csv_file = "output/books_extraction_" + timestamp + ".csv"
+
+    # Write to file 
     try:
-        with open(csv_file, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=csv_header, delimiter=",")
+        if not exists(csv_file):
+            f_output = open(csv_file ,'w')
+            writer = csv.DictWriter(f_output, fieldnames=csv_header)
             writer.writeheader()
-            writer.writerow(book)
+        else:
+            f_output = open(csv_file ,'a')
+            writer = csv.DictWriter(f_output, fieldnames=csv_header)
+
+        writer.writerow(book)
+        f_output.close()
     except IOError:
         print("I/O error")
-    
+        
 
 if __name__ == "__main__":
 	main()
