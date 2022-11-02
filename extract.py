@@ -79,7 +79,7 @@ def get_book_url_from_category(url, timestamp, name_of_category):
             list_of_a = image.find_all("a", href=True)
             for url in list_of_a:
 
-                # Reformat the URL to an absolute URL using regex
+                # Reformat the URL using regex
                 relative_path = re.search(
                     r"[0-9a-zA-Z].*", url["href"]
                 ).group()
