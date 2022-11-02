@@ -15,7 +15,7 @@ This script will extract data from the website http://books.toscrape.com/ and ge
 - review_rating 
 - image_url
 
-One csv file per category will be created, inside a folder named "output".
+One csv file per category will be created, inside a folder named "csv_files".
 
 Images will also be saved in a folder named "img" and in the sub folder "category".
 
@@ -23,7 +23,15 @@ Images will also be saved in a folder named "img" and in the sub folder "categor
 
 Clone the repository on your system, for example in ~/scrapper
 
-You then go in the folder using the command line
+You then go in the folder using the command line.
+
+First you need the virtual environment :
+```shell
+python3 -m venv env
+source env/bin/activate
+```
+
+(env) should now be displayed on the left of your prompt
 
 To download all the library, you can do this command :
 ```shell
