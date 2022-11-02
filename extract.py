@@ -1,12 +1,10 @@
-from cgitb import handler
-from typing import IO
-from unicodedata import name
 import requests, re
 from bs4 import BeautifulSoup
 import csv
 import time
 from os.path import exists
 import os
+from threading import Thread
 
 def main():
     timestamp = time.strftime("%Y%m%d-%H%M%S")
@@ -28,6 +26,8 @@ def main():
             # Ignore the Book category
             list_category_html.pop(0)
             
+            # Threading
+            threads = []
 
             # Find the list of url and parse each of those
             for category in list_category_html:
@@ -36,7 +36,15 @@ def main():
                 # Replace the space by a "_" in the 
                 name_of_category = name_of_category.replace(" ", "_")
                 url = r.url + category["href"]
-                get_csv_from_category(url, timestamp, name_of_category)
+
+                # Create threads
+                t = Thread(target=get_csv_from_category, args=(url, timestamp, name_of_category))
+                threads.append(t)
+                t.start()
+
+            for t in threads:
+                t.join()
+
 
     else:
         print(f"{r.status_code} on URL {r.url}")
