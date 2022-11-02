@@ -34,7 +34,7 @@ This will install all the dependancies necessary to run this script.
 
 Then type 
 ```shell
-python3 extract.py`
+python3 extract.py
 ```
 
 You may need to use python instead of python3 depending on your system.

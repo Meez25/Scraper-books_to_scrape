@@ -143,6 +143,12 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
         # Getting the image URL
         image_url = soup.find(class_="carousel").find("img")["src"]
 
+        # Reformat the url
+        absolute_url = (
+            "http://books.toscrape.com/"
+            + re.search(r"[a-zA-Z].*", image_url).group()
+        )
+
         # Getting the product description otherwise empty string
         if soup.find(class_="sub-header").find_next_sibling("p"):
             product_description = (
@@ -202,14 +208,14 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
         book["product_description"] = product_description
         book["category"] = category
         book["review_rating"] = review_rating
-        book["image_url"] = image_url
+        book["image_url"] = absolute_url
 
         # Send the dict to the csv writer function
         write_dict_to_csv(book, timestamp, name_of_category)
 
         # Download the image from the url stored in the dict
         download_image_from_url(
-            image_url, name_of_category, universal_product_code
+            absolute_url, name_of_category, universal_product_code
         )
 
         print(f'{book["title"]} from the {book["category"]} category')
@@ -220,18 +226,12 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
 
 # Download image from Url and save it in /img
 def download_image_from_url(
-    image_url, name_of_category, universal_product_code
+    absolute_url, name_of_category, universal_product_code
 ):
     """Download an image by using the requests module and save it"""
 
     # Reformat the name of category by replacing the space by "_"
     name_of_category = name_of_category.replace(" ", "_")
-
-    # Reformat the url
-    absolute_url = (
-        "http://books.toscrape.com/"
-        + re.search(r"[a-zA-Z].*", image_url).group()
-    )
 
     # Get the bytes of the image
     img_data = requests.get(absolute_url).content
