@@ -47,7 +47,7 @@ python3 extract.py
 
 You may need to use python instead of python3 depending on your system.
 
-Et voila ! Now you should have 2 directory, one "img" and one "csv_files".
+Et voila ! After around a minute you should have 2 directory, one "img" and one "csv_files".
 
 "csv_files" contains 50 csv files. One per category. In each of those, you will find a list of the books.
 "img" contains all 50 categories and inside you will find the files named such as "universal_product_code.jpg"
