@@ -285,14 +285,18 @@ def write_dict_to_csv(book, timestamp, name_of_category):
     ]
 
     # Check if path exists, otherwise create it
-    path = "output/"
+    path = "csv_files/"
     isExist = exists(path)
     if not isExist:
         os.makedirs(path)
 
     # Formatting of csv filename
     csv_file = (
-        "output/Books_category_" + name_of_category + "_" + timestamp + ".csv"
+        "csv_files/Books_category_"
+        + name_of_category
+        + "_"
+        + timestamp
+        + ".csv"
     )
 
     # Write to file
