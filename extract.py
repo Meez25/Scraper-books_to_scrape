@@ -9,12 +9,16 @@ from threading import Thread
 
 
 def main():
+    """Create threads to parse each category faster"""
+
+    # Create a timestamp for the csv filename
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     r = requests.get("http://books.toscrape.com/")
 
     # Check that we receive the 200 status code
     if r.status_code == 200:
+
         # Fix the encoding
         r.encoding = r.apparent_encoding
 
@@ -39,9 +43,9 @@ def main():
                 name_of_category = name_of_category.replace(" ", "_")
                 url = r.url + category["href"]
 
-                # Create threads
+                # Create and start threads
                 t = Thread(
-                    target=get_csv_from_category,
+                    target=get_book_url_from_category,
                     args=(url, timestamp, name_of_category),
                 )
                 threads.append(t)
@@ -54,20 +58,19 @@ def main():
         print(f"{r.status_code} on URL {r.url}")
 
 
-def get_csv_from_category(url, timestamp, name_of_category):
-
-    # Get the time for the filename
-
+def get_book_url_from_category(url, timestamp, name_of_category):
+    """Get all the book url by visiting the category URL"""
     r = requests.get(url)
 
     # Check that we receive the 200 status code
     if r.status_code == 200:
+
         # Fix the encoding
         r.encoding = r.apparent_encoding
 
         soup = BeautifulSoup(r.text, "html.parser")
 
-        # Getting all the link to books of the page
+        # Getting all the link to the books of the page
         image_containers = soup.find_all(
             "div", attrs={"class": "image_container"}
         )
@@ -76,7 +79,7 @@ def get_csv_from_category(url, timestamp, name_of_category):
             list_of_a = image.find_all("a", href=True)
             for url in list_of_a:
 
-                # Reformate the URL to an absolute URL
+                # Reformat the URL to an absolute URL using regex
                 relative_path = re.search(
                     r"[0-9a-zA-Z].*", url["href"]
                 ).group()
@@ -88,20 +91,23 @@ def get_csv_from_category(url, timestamp, name_of_category):
                     absolute_url, timestamp, name_of_category
                 )
 
-        # Check if there are other pages
+        # Check if there are other pages (next button)
         if soup.find(class_="next"):
             next_url = soup.find(class_="next").find("a", href=True)["href"]
+
+            # Reformat URL
             first_part_of_url = re.search(r".*/", r.url).group()
             next_url = first_part_of_url + next_url
 
-            get_csv_from_category(next_url, timestamp, name_of_category)
+            # Recursive
+            get_book_url_from_category(next_url, timestamp, name_of_category)
 
     else:
         print(f"{r.status_code} on URL {r.url}")
 
 
 def get_csv_from_book_url(url, timestamp, name_of_category):
-
+    """Create a dict by visiting an URL and extracting html data"""
     r = requests.get(url)
 
     # Check that we receive the 200 status code
@@ -137,7 +143,7 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
         # Getting the image URL
         image_url = soup.find(class_="carousel").find("img")["src"]
 
-        # Getting the product description
+        # Getting the product description otherwise empty string
         if soup.find(class_="sub-header").find_next_sibling("p"):
             product_description = (
                 soup.find(class_="sub-header")
@@ -147,8 +153,10 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
         else:
             product_description = ""
 
-        """Getting the category (should be the link before the name title)
-        and removing the \n"""
+        """
+        Getting the category (should be the link before the name title)
+        and removing the \n
+        """
         category = (
             soup.find(class_="breadcrumb")
             .find_all("li")[-2]
@@ -175,7 +183,7 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
                 if field_of_table == "Availability":
                     """
                     Search for number in the string value_of_table
-                    and assign it in the dic
+                    and assign it in the dict
                     """
                     if "In stock" in value_of_table:
                         number_available = re.search(
@@ -196,11 +204,15 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
         book["review_rating"] = review_rating
         book["image_url"] = image_url
 
+        # Send the dict to the csv writer function
         write_dict_to_csv(book, timestamp, name_of_category)
+
+        # Download the image from the url stored in the dict
         download_image_from_url(
-            image_url, name_of_category, universal_product_code, title
+            image_url, name_of_category, universal_product_code
         )
-        print(f'{book["title"]} from {book["category"]} category')
+
+        print(f'{book["title"]} from the {book["category"]} category')
 
     else:
         print(f"{r.status_code} on URL {r.url}")
@@ -208,27 +220,43 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
 
 # Download image from Url and save it in /img
 def download_image_from_url(
-    image_url, name_of_category, universal_product_code, title
+    image_url, name_of_category, universal_product_code
 ):
+    """Download an image by using the requests module and save it"""
 
+    # Reformat the name of category by replacing the space by "_"
     name_of_category = name_of_category.replace(" ", "_")
+
+    # Reformat the url
     absolute_url = (
         "http://books.toscrape.com/"
         + re.search(r"[a-zA-Z].*", image_url).group()
     )
-    print(absolute_url)
+
+    # Get the bytes of the image
     img_data = requests.get(absolute_url).content
+
+    # Check if the path exists, otherwise create it
     path = "img/" + name_of_category + "/"
     isExist = exists(path)
     if not isExist:
         os.makedirs(path)
-    with open(path + universal_product_code + ".jpg", "wb") as handler:
-        # name_of_category + "/" + title[:10].strip() + "_"
-        handler.write(img_data)
+
+    # Formatting of image filename
+    filename = universal_product_code + ".jpg"
+
+    try:
+        with open(path + filename, "wb") as handler:
+            handler.write(img_data)
+    except Exception as err:
+        print(
+            f"Exception trying to write {filename} in {path}. Exception : "
+            + err
+        )
 
 
-# Function to convert numeric words to number
 def convert_numeric_words_to_number(star):
+    """Function to convert numeric words to number"""
     help_dict = {
         "zero": "0",
         "one": "1",
@@ -241,6 +269,7 @@ def convert_numeric_words_to_number(star):
 
 
 def write_dict_to_csv(book, timestamp, name_of_category):
+    """From the received dict, write a CSV file"""
 
     csv_header = [
         "product_page_url",
@@ -255,11 +284,13 @@ def write_dict_to_csv(book, timestamp, name_of_category):
         "image_url",
     ]
 
+    # Check if path exists, otherwise create it
     path = "output/"
     isExist = exists(path)
     if not isExist:
         os.makedirs(path)
 
+    # Formatting of csv filename
     csv_file = (
         "output/Books_category_" + name_of_category + "_" + timestamp + ".csv"
     )
@@ -276,8 +307,8 @@ def write_dict_to_csv(book, timestamp, name_of_category):
 
         writer.writerow(book)
         f_output.close()
-    except IOError:
-        print("I/O error")
+    except Exception as err:
+        print(f"Exception happened trying to write {csv_file}" + err)
 
 
 if __name__ == "__main__":
