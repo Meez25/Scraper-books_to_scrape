@@ -1,4 +1,4 @@
-# Scrapper-books_to_scrape
+# Scraper-books_to_scrape
 
 ## Summary
 
@@ -21,7 +21,7 @@ Images will also be saved in a folder named "img" and in the sub folder "categor
 
 ## Usage
 
-Clone the repository on your system, for example in ~/scrapper
+Clone the repository on your system, for example in ~/scraper
 
 You then go in the folder using the command line.
 
