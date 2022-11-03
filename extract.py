@@ -188,7 +188,7 @@ def get_csv_from_book_url(url, timestamp, name_of_category):
 
                 if field_of_table == "Availability":
                     """
-                    Search for number in the string value_of_table
+                    Search for number in the string value_of_tableimage.png
                     and assign it in the dict
                     """
                     if "In stock" in value_of_table:
