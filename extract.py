@@ -36,7 +36,7 @@ def main():
             threads = []
 
             # Find the list of url and parse each of those
-            for category in list_category_html:
+            for i, category in enumerate(list_category_html):
                 name_of_category = category.text.strip()
 
                 # Replace the space by a "_" in the
@@ -50,6 +50,8 @@ def main():
                 )
                 threads.append(t)
                 t.start()
+                if i == 0:
+                    time.sleep(1)
 
             for t in threads:
                 t.join()
