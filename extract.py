@@ -316,4 +316,7 @@ def write_dict_to_csv(book, timestamp, name_of_category):
 
 
 if __name__ == "__main__":
+    # Count executation time
+    start_time = time.time()
     main()
+    print("--- %s seconds ---" % (time.time() - start_time))
